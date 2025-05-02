@@ -1,0 +1,116 @@
+// 1. Підключення до бази даних
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 2. Генерація Prisma Client
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 3. Моделі даних
+
+model User {
+  id            Int             @id @default(autoincrement())
+  email         String          @unique
+  password      String
+  role          Role
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  deletedAt     DateTime?
+
+  userInfo      UserInfo?        @relation("UserAndUserInfo")
+  sales         Sale[]           @relation("PharmacistSales")
+  prescriptions Prescription[]  @relation("PrescriberPrescriptions")
+}
+
+model UserInfo {
+  userId       Int      @id
+  firstName    String
+  lastName     String
+  phoneNumber  String?
+  address      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt     DateTime?
+
+  user         User     @relation("UserAndUserInfo", fields: [userId], references: [id])
+}
+
+
+model Client {
+  id            Int           @id @default(autoincrement())
+  fullName      String
+  contactInfo   String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  sales         Sale[]
+  prescriptions Prescription[]
+}
+
+model Medication {
+  id                   Int          @id @default(autoincrement())
+  name                 String
+  description          String
+  stock                Int
+  price                Float
+  requiresPrescription Boolean
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  deletedAt     DateTime?
+
+  saleItems            SaleItem[]
+  prescriptions        Prescription[]
+}
+
+model Sale {
+  id            Int       @id @default(autoincrement())
+  pharmacistId  Int
+  clientId      Int
+  totalPrice    Float
+  saleDate      DateTime  @default(now())
+  deletedAt     DateTime?
+
+  pharmacist    User      @relation("PharmacistSales", fields: [pharmacistId], references: [id])
+  client        Client    @relation(fields: [clientId], references: [id])
+  saleItems     SaleItem[]
+}
+
+model SaleItem {
+  id            Int       @id @default(autoincrement())
+  saleId        Int
+  medicationId  Int
+  quantity      Int
+  priceAtSale   Float
+  deletedAt     DateTime?
+
+  sale          Sale      @relation(fields: [saleId], references: [id])
+  medication    Medication@relation(fields: [medicationId], references: [id])
+}
+
+model Prescription {
+  id             Int       @id @default(autoincrement())
+  clientId       Int
+  medicationId   Int
+  prescribedById Int
+  validUntil     DateTime
+  allowedUses    Int
+  usedUses       Int @default(0)
+  createdAt      DateTime  @default(now())
+  deletedAt     DateTime?
+
+  client         Client    @relation(fields: [clientId], references: [id])
+  medication     Medication@relation(fields: [medicationId], references: [id])
+  prescribedBy   User      @relation("PrescriberPrescriptions", fields: [prescribedById], references: [id])
+}
+
+// 4. Enum ролей
+enum Role {
+  USER
+  PHARMACIST
+  ADMIN
+  DOCTOR
+}
