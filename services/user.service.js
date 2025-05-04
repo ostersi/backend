@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../app.js";
 
 // ➕ Створення користувача
-export const createUser = async (data) => {
+export const createUser = async (data, creatorId) => {
   const {
     email,
     password,
@@ -20,6 +20,7 @@ export const createUser = async (data) => {
       email,
       password: hashedPassword,
       role,
+      createdByUser: creatorId,
       userInfo: {
         create: {
           firstName,
@@ -34,8 +35,7 @@ export const createUser = async (data) => {
 };
 
 // 🛠️ Оновлення користувача
-export const updateUser = async (userId, data) => {
-
+export const updateUser = async (userId, data, updaterId) => {
   const {
     email,
     role,
@@ -49,6 +49,8 @@ export const updateUser = async (userId, data) => {
   const updateData = {
     email,
     role,
+    updatedAt: new Date(),
+    updatedByUser: updaterId,
     ...(password && password.trim() && {
       password: await bcrypt.hash(password, 10),
     }),
@@ -59,7 +61,6 @@ export const updateUser = async (userId, data) => {
     data: updateData,
   });
 
-  // 🧼 Скинути UserInfo якщо немає нічого? — ні. Оновлюємо тільки якщо є щось
   const userInfoUpdate = {};
   if (firstName) userInfoUpdate.firstName = firstName;
   if (lastName) userInfoUpdate.lastName = lastName;
@@ -86,8 +87,7 @@ export const updateUser = async (userId, data) => {
   });
 };
 
-  
-
+// 📄 Усі користувачі (тільки активні)
 export const getAllUsers = async () => {
   return prisma.user.findMany({
     where: { deletedAt: null },
@@ -95,6 +95,7 @@ export const getAllUsers = async () => {
   });
 };
 
+// 📄 Один користувач
 export const getUserById = async (id) => {
   return prisma.user.findUnique({
     where: { id },
@@ -102,11 +103,13 @@ export const getUserById = async (id) => {
   });
 };
 
-export const deleteUser = async (id) => {
+// ❌ Soft delete
+export const deleteUser = async (id, deleterId) => {
   return prisma.user.update({
     where: { id },
-    data: { deletedAt: new Date() },
+    data: {
+      deletedAt: new Date(),
+      deletedByUser: deleterId,
+    },
   });
 };
-
-

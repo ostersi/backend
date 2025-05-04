@@ -10,8 +10,9 @@ import {
 import { authenticateToken, authorizeRoles } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
+// Перегляд усіх користувачів
 
-router.get("/", authenticateToken, authorizeRoles("ADMIN"), getUsers);
+router.get("/", authenticateToken, authorizeRoles("ADMIN", "PHARMACIST"), getUsers);
 router.get("/me", authenticateToken, getCurrentUser);
 router.get("/:id", authenticateToken, authorizeRoles("ADMIN"), getSingleUser);
 router.post("/", authenticateToken, authorizeRoles("ADMIN"), createNewUser);

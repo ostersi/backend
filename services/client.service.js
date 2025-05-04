@@ -15,23 +15,35 @@ export const getClientById = async (id) => {
   });
 };
 
-// ➕ Створити нового клієнта
-export const createClient = async (data) => {
-  return prisma.client.create({ data });
-};
-
-// 🛠️ Оновити клієнта (якщо активний)
-export const updateClient = async (id, data) => {
-  return prisma.client.update({
-    where: { id: parseInt(id) },
-    data,
+// ➕ Створити нового клієнта (з createdByUser)
+export const createClient = async (data, userId) => {
+  return prisma.client.create({
+    data: {
+      ...data,
+      createdByUser: userId,
+    },
   });
 };
 
-// ❌ Мʼяке видалення (Soft Delete)
-export const deleteClient = async (id) => {
+// 🛠️ Оновити клієнта (якщо активний) + updatedByUser
+export const updateClient = async (id, data, userId) => {
   return prisma.client.update({
     where: { id: parseInt(id) },
-    data: { deletedAt: new Date() },
+    data: {
+      ...data,
+      updatedAt: new Date(),
+      updatedByUser: userId,
+    },
+  });
+};
+
+// ❌ Мʼяке видалення (Soft Delete) + deletedByUser
+export const deleteClient = async (id, userId) => {
+  return prisma.client.update({
+    where: { id: parseInt(id) },
+    data: {
+      deletedAt: new Date(),
+      deletedByUser: userId,
+    },
   });
 };

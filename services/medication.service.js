@@ -19,25 +19,39 @@ export const getMedicationById = async (id) => {
 };
 
 // ➕ Створити новий медикамент
-export const createMedication = async (data) => {
-  return prisma.medication.create({ data });
+export const createMedication = async (data, userId) => {
+  return prisma.medication.create({
+    data: {
+      ...data,
+      createdByUser: userId,
+    },
+  });
 };
 
 // ✏️ Оновити медикамент
-export const updateMedication = async (id, data) => {
+export const updateMedication = async (id, data, userId) => {
   return prisma.medication.update({
     where: { id: parseInt(id) },
-    data,
+    data: {
+      ...data,
+      updatedAt: new Date(),
+      updatedByUser: userId,
+    },
   });
 };
 
 // 🧼 Мʼяке видалення медикаменту (soft delete)
-export const deleteMedication = async (id) => {
+export const deleteMedication = async (id, userId) => {
   return prisma.medication.update({
     where: { id: parseInt(id) },
-    data: { deletedAt: new Date() },
+    data: {
+      deletedAt: new Date(),
+      deletedByUser: userId,
+    },
   });
 };
+
+// ✅ Тільки ті, що потребують рецепт і не видалені
 export const getPrescriptionRequiredMedications = async () => {
   return prisma.medication.findMany({
     where: {

@@ -1,7 +1,7 @@
 import { prisma } from "../app.js";
 
-// 🟢 Створення продажу
-export const createSale = async (pharmacistId, clientId, items) => {
+// 🟢 Створення продажу з createdByUser
+export const createSale = async (pharmacistId, clientId, items, createdByUser) => {
   return prisma.$transaction(async (tx) => {
     let totalPrice = 0;
 
@@ -21,7 +21,7 @@ export const createSale = async (pharmacistId, clientId, items) => {
             medicationId: item.medicationId,
             validUntil: { gte: new Date() },
             allowedUses: { gt: prisma.prescription.fields.usedUses },
-            deletedAt: null, // 🛡️
+            deletedAt: null,
           },
         });
 
@@ -52,6 +52,7 @@ export const createSale = async (pharmacistId, clientId, items) => {
         pharmacistId,
         clientId,
         totalPrice,
+        createdByUser,
         saleItems: {
           create: items.map((item) => ({
             medicationId: item.medicationId,
@@ -72,7 +73,7 @@ export const createSale = async (pharmacistId, clientId, items) => {
 // 📄 Історія продажів (тільки активні)
 export const getSalesHistory = async (role, pharmacistId) => {
   const whereCondition = {
-    deletedAt: null, // ✅ Soft delete підтримка
+    deletedAt: null,
     ...(role === "PHARMACIST" ? { pharmacistId } : {}),
   };
 
@@ -81,7 +82,9 @@ export const getSalesHistory = async (role, pharmacistId) => {
     include: {
       client: true,
       pharmacist: {
-        select: { id: true, email: true, role: true },
+        include: {
+          userInfo: true,
+        },
       },
       saleItems: {
         include: {
@@ -91,6 +94,17 @@ export const getSalesHistory = async (role, pharmacistId) => {
     },
     orderBy: {
       saleDate: "desc",
+    },
+  });
+};
+
+// ❌ Мʼяке видалення продажу (soft delete)
+export const deleteSale = async (id, userId) => {
+  return prisma.sale.update({
+    where: { id: parseInt(id) },
+    data: {
+      deletedAt: new Date(),
+      deletedByUser: userId,
     },
   });
 };

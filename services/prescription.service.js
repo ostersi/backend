@@ -48,8 +48,8 @@ export const getPrescriptionById = async (id) => {
   });
 };
 
-// Створити новий рецепт
-export const createPrescription = async (data) => {
+// Створити новий рецепт з createdByUser
+export const createPrescription = async (data, userId) => {
   return prisma.prescription.create({
     data: {
       clientId: data.clientId,
@@ -59,27 +59,30 @@ export const createPrescription = async (data) => {
       validUntil: new Date(data.validUntil),
       allowedUses: data.allowedUses,
       usedUses: 0,
+      createdByUser: userId,
     },
   });
 };
 
-// Оновити рецепт
-export const updatePrescription = async (id, data) => {
+// Оновити рецепт з updatedByUser
+export const updatePrescription = async (id, data, userId) => {
   return prisma.prescription.update({
     where: { id: parseInt(id) },
     data: {
       allowedUses: data.allowedUses,
       validUntil: new Date(data.validUntil),
+      updatedByUser: userId,
     },
   });
 };
 
-// ❌ Soft delete рецепта
-export const deletePrescription = async (id) => {
+// ❌ Soft delete рецепта з deletedByUser
+export const deletePrescription = async (id, userId) => {
   return prisma.prescription.update({
     where: { id: parseInt(id) },
     data: {
       deletedAt: new Date(),
+      deletedByUser: userId,
     },
   });
 };
