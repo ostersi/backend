@@ -52,6 +52,8 @@ model User {
   updatedPrescriptions Prescription[] @relation("UpdatedPrescriptions")
   deletedPrescriptions Prescription[] @relation("DeletedPrescriptions")
 
+  auditLogs      AuditLog[] @relation("UserAuditLogs") // ✅ ← ДОДАТИ
+
 }
 
 
@@ -166,6 +168,19 @@ model Prescription {
   client          Client    @relation(fields: [clientId], references: [id])
   medication      Medication@relation(fields: [medicationId], references: [id])
   prescribedBy    User      @relation("PrescriberPrescriptions", fields: [prescribedById], references: [id])
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  model      String
+  action     String
+  entityId   Int?
+  dataBefore Json?
+  dataAfter  Json?
+  timestamp  DateTime @default(now())
+  userId     Int?
+
+  user           User?      @relation("UserAuditLogs", fields: [userId], references: [id]) // ✅ ← Змінив
 }
 
 
