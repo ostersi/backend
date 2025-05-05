@@ -16,14 +16,19 @@ export const getClientById = async (id) => {
 };
 
 // ➕ Створити нового клієнта (з createdByUser)
-export const createClient = async (data, userId) => {
+export const createClient = async (data) => {
+  const fullName = data.fullName?.trim() || `Клієнт #${Date.now()}`;
+  const contactInfo = data.contactInfo?.trim() || "";
+
   return prisma.client.create({
     data: {
-      ...data,
-      createdByUser: userId,
+      fullName,
+      contactInfo,
+      createdByUser: data.createdByUser, // якщо прокидається
     },
   });
 };
+
 
 // 🛠️ Оновити клієнта (якщо активний) + updatedByUser
 export const updateClient = async (id, data, userId) => {
