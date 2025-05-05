@@ -5,6 +5,8 @@ import { PrismaClient } from "@prisma/client";
 
 import { auditLogMiddleware } from "./prisma/auditLog.middleware.js";
 import { auditMiddleware } from "./prisma/audit.middleware.js";
+import { addPrismaContext } from "./middlewares/context.middleware.js";
+import { authenticateToken } from "./middlewares/auth.middleware.js";
 
 // 🔀 Роутери
 import authRoutes from "./routes/auth.routes.js";
@@ -18,29 +20,30 @@ import auditLogRoutes from "./routes/audit-log.routes.js";
 // 🌐 Ініціалізація .env
 dotenv.config();
 
-// ✅ Prisma Client
+// ✅ Prisma
 export const prisma = new PrismaClient();
-
-// 🛡️ Middleware Prisma (аудит + лог)
-prisma.$use(auditMiddleware("userId")); // Audit trail (createdBy / updatedBy / deletedBy)
+prisma.$use(auditMiddleware("userId")); // 📌 Middleware для createdBy / updatedBy / deletedBy
 prisma.$use(async (params, next) => {
   const actionsToLog = ["create", "update", "delete"];
   if (!actionsToLog.includes(params.action.toLowerCase())) {
-    return next(params); // ❌ Пропускаємо read-запити
+    return next(params);
   }
-
-  return auditLogMiddleware()(params, next); // ✅ Тільки для змін
+  return auditLogMiddleware()(params, next);
 });
 
-// 🚀 Express App
+// 🚀 Ініціалізація Express
 const app = express();
-
-// 🛡️ HTTP Middleware
 app.use(cors());
 app.use(express.json());
 
-// 🔀 API Роути
+
+
+// 🔀 Роутинг
 app.use("/api/auth", authRoutes);
+// 🔐 Контекст користувача (прокидати userId в Prisma)
+app.use(authenticateToken);
+app.use(addPrismaContext);
+
 app.use("/api/medications", medicationRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
@@ -48,11 +51,10 @@ app.use("/api/sales", saleRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/audit-log", auditLogRoutes);
 
-// 🧪 Root тест
+// 🧪 Test
 app.get("/", (req, res) => {
   res.send("Pharma Management System Backend is running... 🧪");
 });
-
 
 // ❌ Error Handler
 app.use((err, req, res, next) => {

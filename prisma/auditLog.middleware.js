@@ -14,20 +14,17 @@ export const auditLogMiddleware = () => {
       "SaleItem",
     ];
 
-    if (!auditableModels.includes(model)) {
-      return next(params);
-    }
+    if (!auditableModels.includes(model)) return next(params);
 
-    const userId = params.context?.userId || null;
+    // 🟢 ← Важливо! Додатково перевіримо чи є userId в global context
+    const userId = prisma.$useParamsContext?.userId || null;
 
-    let before = null;
-
-    // Якщо це soft delete
+    // Soft delete detection
     if (action === "update" && params.args?.data?.deletedAt) {
       action = "SOFT_DELETE";
     }
 
-    // Зберігаємо стан "до" для update/delete
+    let before = null;
     if (["update", "delete"].includes(action)) {
       try {
         before = await prisma[model.toLowerCase()].findUnique({
@@ -39,7 +36,6 @@ export const auditLogMiddleware = () => {
     }
 
     const result = await next(params);
-
     const after = action === "create" ? result : params.args?.data;
 
     try {
@@ -60,3 +56,4 @@ export const auditLogMiddleware = () => {
     return result;
   };
 };
+
