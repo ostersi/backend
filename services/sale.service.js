@@ -14,6 +14,13 @@ export const createSale = async (pharmacistId, clientId, items, createdByUser) =
         throw new Error(`Медикамент з id ${item.medicationId} не знайдено.`);
       }
 
+      if (
+        medication.expirationDate &&
+        new Date(medication.expirationDate) < new Date()
+      ) {
+        throw new Error(`Медикамент "${medication.name}" прострочено і не може бути проданий.`);
+      }
+      
       if (medication.requiresPrescription) {
         const prescription = await tx.prescription.findFirst({
           where: {

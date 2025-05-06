@@ -97,6 +97,7 @@ model Medication {
   stock                Int
   price                Float
   requiresPrescription Boolean
+  expirationDate       DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   deletedAt            DateTime?
